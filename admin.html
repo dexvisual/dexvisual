@@ -1,0 +1,25 @@
+<!DOCTYPE html><html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DEX VISUAL admin</title>
+<style>body{margin:0;background:#0b0b0e;color:#f4f4f8;font:15px Manrope,Segoe UI,sans-serif;padding:20px}
+.g{max-width:900px;margin:0 auto}.c{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:16px;padding:16px;margin:12px 0;backdrop-filter:blur(12px)}
+button,input{font:inherit;color:#fff;background:rgba(139,124,255,.35);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:8px 12px;cursor:pointer}input{background:rgba(255,255,255,.08);cursor:text}
+a{color:#5fd4ff}.r{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.s{opacity:.7}</style></head><body><div class="g">
+<h2>DEX VISUAL — admin</h2>
+<div class="c r"><input id="pw" type="password" placeholder="Admin paroli"><button onclick="go()">Kirish</button></div>
+<div id="app" hidden>
+<div class="c"><b>DEX VISUAL fayli</b> <span class="s" id="cur"></span>
+<div class="r" style="margin-top:8px"><input type="file" id="f"><button onclick="upl()">Joylash</button></div></div>
+<h3>Buyurtmalar</h3><div id="list"></div></div></div>
+<script>
+const $=s=>document.querySelector(s);let K='';
+const H=()=>({'x-admin':K});
+async function go(){K=$('#pw').value;await load();}
+async function load(){const r=await fetch('/api/admin/orders',{headers:H()});if(!r.ok){alert('Parol xato');return}
+ const j=await r.json();$('#app').hidden=false;$('#cur').textContent=j.client?'— joylangan: '+j.client:'— hali joylanmagan';
+ $('#list').innerHTML=j.orders.map(o=>`<div class="c"><b>${esc(o.plan)}</b> — ${o.price} so'm · ${esc(o.contact)}<br><span class="s">${new Date(o.at).toLocaleString()} · holat: ${o.status}${o.downloaded?' · yuklab olingan':''}</span>
+ <div class="r" style="margin-top:8px"><a target="_blank" href="/api/admin/receipt/${o.id}?k=${encodeURIComponent(K)}">Chekni ko'rish</a>
+ <button onclick="act('${o.id}','approve')">Tasdiqlash</button><button onclick="act('${o.id}','reject')">Rad etish</button><button onclick="act('${o.id}','reset')">Yana 1 marta yuklashga ruxsat</button></div></div>`).join('')||'<p class="s">Buyurtma yo\'q.</p>';}
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function act(id,a){await fetch(`/api/admin/orders/${id}/${a}`,{method:'POST',headers:H()});load();}
+async function upl(){const f=$('#f').files[0];if(!f)return;const fd=new FormData();fd.append('file',f);
+ const r=await fetch('/api/admin/client',{method:'POST',headers:H(),body:fd});alert(r.ok?'Joylandi':'Xato');load();}
+</script></body></html>
